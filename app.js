@@ -18,63 +18,104 @@ const PRODUCTS = [
 
 const DEFAULT_PRODUCT = { access: "access_1m", channels: "ch_1000" };
 
+// Пополнение баланса: те же пределы, что в боте (MIN_TOPUP_RUB, max_topup_rub()).
+const TOPUP_MIN = 100;
+const TOPUP_MAX = 9216;
+const TOPUP_DEFAULT = 1000;
+
 // Адрес оплаты на сервере бота. Пока его нет, кнопка ведёт в бота.
 const PAY_API_URL = "";
 const BOT_URL = "https://t.me/gualaparser_bot";
 
 const KIND_NOTES = {
-  access: "Все функции бота, каналов в отчётах сколько угодно. Если доступ уже есть, срок добавится к нему.",
-  channels: "Платите только за каналы, которые попали в отчёт. Остаток пакета не сгорает.",
+  access: "Доступ на срок: все функции бота, каналов в отчётах сколько угодно. Если доступ уже есть, срок добавится к нему.",
+  channels: "Пакет каналов: платите только за каналы, которые попали в отчёт. Остаток пакета не сгорает.",
+  balance: "Пополнение баланса: его можно потратить в боте на доступ и пакеты каналов.",
 };
+const RECIPIENT_LABELS = { access: "Доступ получит", channels: "Пакет получит", balance: "Баланс пополнится у" };
 
 const rub = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
 const rubFraction = new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-function formatRub(value) {
-  return `${rub.format(value)} ₽`;
-}
+const formatRub = (value) => `${rub.format(value)} ₽`;
 
 function unitNote(product) {
-  if (product.kind === "access") {
-    return `${rub.format(Math.round(product.price / product.days))} ₽ в день`;
-  }
+  if (product.kind === "access") return `${rub.format(Math.round(product.price / product.days))} ₽ в день`;
   return `${rubFraction.format(product.price / product.channels)} ₽ за канал`;
 }
 
-function orderTitle(product) {
-  return product.kind === "access" ? `Доступ на ${product.title}` : `Пакет ${product.title}`;
+// Ник Telegram: 5–32 символа, латиница, цифры и «_», начинается с буквы.
+// Принимаем и вставленные «@ник» или ссылку t.me/ник.
+function normalizeUsername(raw) {
+  return raw.trim().replace(/^https?:\/\//i, "").replace(/^(t\.me|telegram\.me)\//i, "").replace(/^@/, "").split(/[/?#\s]/)[0];
 }
+const isUsername = (value) => /^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(value);
 
 const params = new URLSearchParams(window.location.search);
-const recipient = (params.get("u") || "").replace(/^@/, "");
-const validRecipient = /^[A-Za-z0-9_]{3,32}$/.test(recipient) ? recipient : "";
+const linkedRecipient = normalizeUsername(params.get("u") || "");
+const recipientFromBot = isUsername(linkedRecipient) ? linkedRecipient : "";
 
-let selected = PRODUCTS.find((p) => p.id === params.get("p")) || PRODUCTS.find((p) => p.id === DEFAULT_PRODUCT.access);
-let kind = selected.kind;
+let kind = "access";
+let selected = PRODUCTS.find((p) => p.id === DEFAULT_PRODUCT.access);
+let amount = TOPUP_DEFAULT;
+if (params.get("p") === "topup") {
+  kind = "balance";
+  const fromLink = Number.parseInt(params.get("a") || "", 10);
+  if (Number.isFinite(fromLink)) amount = fromLink;
+} else {
+  const fromLink = PRODUCTS.find((p) => p.id === params.get("p"));
+  if (fromLink) {
+    selected = fromLink;
+    kind = fromLink.kind;
+  }
+}
 
+const $ = (id) => document.getElementById(id);
 const segmented = document.querySelector(".segmented");
 const tabs = segmented.querySelectorAll("button");
-const panel = document.getElementById("panel");
-const kindNote = document.getElementById("kind-note");
-const gift = document.getElementById("gift");
-const orderTitleEl = document.getElementById("order-title");
-const orderPriceEl = document.getElementById("order-price");
-const orderTotalEl = document.getElementById("order-total");
-const orderRecipientEl = document.getElementById("order-recipient");
-const payButton = document.getElementById("pay-button");
-const orderHint = document.getElementById("order-hint");
+const panel = $("panel");
+const amountPanel = $("amount-panel");
+const amountInput = $("amount-input");
+const amountField = amountInput.closest(".field");
+const amountHint = $("amount-hint");
+const chips = $("amount-chips").querySelectorAll("button");
+const recipientBlock = $("recipient-block");
+const recipientInput = $("recipient-input");
+const recipientField = recipientInput.closest(".field");
+const recipientHint = $("recipient-hint");
+const recipientHintDefault = recipientHint.innerHTML;
+const gift = $("gift");
+const payButton = $("pay-button");
+const orderHint = $("order-hint");
 
-function renderList() {
+let recipientTouched = false;
+
+function amountError() {
+  if (!Number.isInteger(amount) || amount < TOPUP_MIN || amount > TOPUP_MAX) {
+    return `Введите сумму от ${formatRub(TOPUP_MIN)} до ${formatRub(TOPUP_MAX)}.`;
+  }
+  return "";
+}
+
+function recipient() {
+  return recipientFromBot || normalizeUsername(recipientInput.value);
+}
+
+function renderTabs() {
   segmented.dataset.kind = kind;
   tabs.forEach((tab) => {
     const active = tab.dataset.kind === kind;
     tab.setAttribute("aria-selected", String(active));
     tab.tabIndex = active ? 0 : -1;
   });
-  panel.setAttribute("aria-labelledby", `tab-${kind}`);
-  kindNote.textContent = KIND_NOTES[kind];
+  $("kind-note").textContent = KIND_NOTES[kind];
+  panel.hidden = kind === "balance";
+  amountPanel.hidden = kind !== "balance";
+}
 
+function renderList() {
   panel.replaceChildren();
+  if (kind === "balance") return;
+  panel.setAttribute("aria-labelledby", `tab-${kind}`);
   PRODUCTS.filter((p) => p.kind === kind).forEach((product) => {
     const row = document.createElement("button");
     row.type = "button";
@@ -98,8 +139,8 @@ function renderList() {
     }
     const sub = document.createElement("span");
     sub.className = "choice-sub";
-    sub.textContent = unitNote(product);
     sub.style.display = "block";
+    sub.textContent = unitNote(product);
     text.append(title, sub);
 
     const price = document.createElement("span");
@@ -107,73 +148,114 @@ function renderList() {
     price.textContent = formatRub(product.price);
 
     row.append(radio, text, price);
-    row.addEventListener("click", () => select(product));
+    row.addEventListener("click", () => {
+      selected = product;
+      render();
+    });
     panel.append(row);
   });
-  markSelected();
 }
 
-function markSelected() {
+function renderSelection() {
   panel.querySelectorAll(".choice").forEach((row) => {
     const checked = row.dataset.id === selected.id;
     row.setAttribute("aria-checked", String(checked));
     row.tabIndex = checked ? 0 : -1;
   });
+  chips.forEach((chip) => chip.setAttribute("aria-pressed", String(Number(chip.dataset.amount) === amount)));
 }
 
 function renderOrder() {
-  orderTitleEl.textContent = orderTitle(selected);
-  orderPriceEl.textContent = formatRub(selected.price);
-  orderTotalEl.textContent = formatRub(selected.price);
-  gift.hidden = !selected.gift;
+  const isBalance = kind === "balance";
+  const total = isBalance ? amount : selected.price;
+  const error = isBalance ? amountError() : "";
 
-  if (validRecipient) {
-    orderRecipientEl.hidden = false;
-    orderRecipientEl.replaceChildren(
-      selected.kind === "access" ? "Доступ получит " : "Пакет получит ",
-      Object.assign(document.createElement("b"), { textContent: `@${validRecipient}` }),
+  $("order-title").textContent = isBalance
+    ? "Пополнение баланса"
+    : selected.kind === "access" ? `Доступ на ${selected.title}` : `Пакет ${selected.title}`;
+  $("order-price").textContent = error ? "—" : formatRub(total);
+  $("order-total").textContent = error ? "—" : formatRub(total);
+  gift.hidden = isBalance || !selected.gift;
+
+  amountHint.textContent = error || `От ${formatRub(TOPUP_MIN)} до ${formatRub(TOPUP_MAX)}.`;
+  amountHint.classList.toggle("is-error", Boolean(error) && amountInput.value !== "");
+  amountField.classList.toggle("is-invalid", Boolean(error) && amountInput.value !== "");
+
+  const orderRecipient = $("order-recipient");
+  if (recipientFromBot) {
+    orderRecipient.hidden = false;
+    orderRecipient.replaceChildren(
+      `${RECIPIENT_LABELS[kind]} `,
+      Object.assign(document.createElement("b"), { textContent: `@${recipientFromBot}` }),
     );
+    recipientBlock.hidden = true;
   } else {
-    orderRecipientEl.hidden = true;
+    orderRecipient.hidden = true;
+    recipientBlock.hidden = false;
+  }
+
+  const name = recipient();
+  const nameInvalid = !recipientFromBot && recipientTouched && !isUsername(name);
+  recipientField.classList.toggle("is-invalid", nameInvalid);
+  recipientHint.classList.toggle("is-error", nameInvalid);
+  if (nameInvalid) {
+    recipientHint.textContent = name
+      ? "Ник — от 5 до 32 символов: латинские буквы, цифры и «_», первая — буква."
+      : "Укажите ник, на который зачислить покупку.";
+  } else {
+    recipientHint.innerHTML = recipientHintDefault;
   }
 
   if (PAY_API_URL) {
     payButton.textContent = "Оплатить";
+    payButton.removeAttribute("href");
+    payButton.setAttribute("role", "button");
+    payButton.setAttribute("aria-disabled", String(Boolean(error) || !isUsername(name)));
     orderHint.textContent = "Способ оплаты — СБП или криптовалюту — выберете на следующем шаге.";
   } else {
     payButton.textContent = "Оплатить в боте";
     payButton.href = BOT_URL;
-    orderHint.textContent = "Откройте в боте «Купить доступ» и выберите этот вариант.";
+    payButton.removeAttribute("aria-disabled");
+    orderHint.textContent = isBalance
+      ? "Откройте в боте «Профиль» → «Пополнить баланс»."
+      : "Откройте в боте «Купить доступ» и выберите этот вариант.";
   }
 
   const url = new URL(window.location.href);
-  url.searchParams.set("p", selected.id);
+  if (isBalance) {
+    url.searchParams.set("p", "topup");
+    if (!error) url.searchParams.set("a", String(amount));
+  } else {
+    url.searchParams.set("p", selected.id);
+    url.searchParams.delete("a");
+  }
   window.history.replaceState(null, "", url);
 }
 
-function select(product) {
-  selected = product;
-  markSelected();
+function render() {
+  renderSelection();
   renderOrder();
 }
 
 function switchKind(nextKind) {
   if (nextKind === kind) return;
   kind = nextKind;
-  selected = PRODUCTS.find((p) => p.id === DEFAULT_PRODUCT[kind]);
+  if (kind !== "balance") selected = PRODUCTS.find((p) => p.id === DEFAULT_PRODUCT[kind]);
+  renderTabs();
   renderList();
-  renderOrder();
+  render();
 }
 
+const KIND_ORDER = ["access", "channels", "balance"];
 tabs.forEach((tab) => {
   tab.addEventListener("click", () => switchKind(tab.dataset.kind));
   tab.addEventListener("keydown", (event) => {
-    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-      event.preventDefault();
-      const next = kind === "access" ? "channels" : "access";
-      switchKind(next);
-      segmented.querySelector(`[data-kind="${next}"]`).focus();
-    }
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const step = event.key === "ArrowRight" ? 1 : -1;
+    const next = KIND_ORDER[(KIND_ORDER.indexOf(kind) + step + KIND_ORDER.length) % KIND_ORDER.length];
+    switchKind(next);
+    segmented.querySelector(`[data-kind="${next}"]`).focus();
   });
 });
 
@@ -182,10 +264,45 @@ panel.addEventListener("keydown", (event) => {
   event.preventDefault();
   const list = PRODUCTS.filter((p) => p.kind === kind);
   const step = event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : -1;
-  const index = (list.indexOf(selected) + step + list.length) % list.length;
-  select(list[index]);
+  selected = list[(list.indexOf(selected) + step + list.length) % list.length];
+  render();
   panel.querySelector(`[data-id="${selected.id}"]`).focus();
 });
 
+amountInput.addEventListener("input", () => {
+  amountInput.value = amountInput.value.replace(/\D/g, "");
+  amount = amountInput.value ? Number.parseInt(amountInput.value, 10) : Number.NaN;
+  render();
+});
+
+chips.forEach((chip) => {
+  chip.addEventListener("click", () => {
+    amount = Number(chip.dataset.amount);
+    amountInput.value = String(amount);
+    render();
+  });
+});
+
+recipientInput.addEventListener("input", () => {
+  if (recipientTouched) render();
+});
+recipientInput.addEventListener("blur", () => {
+  recipientTouched = recipientInput.value.trim() !== "" || recipientTouched;
+  const name = normalizeUsername(recipientInput.value);
+  if (name !== recipientInput.value) recipientInput.value = name;
+  render();
+});
+
+payButton.addEventListener("click", (event) => {
+  if (!PAY_API_URL) return;
+  event.preventDefault();
+  recipientTouched = true;
+  render();
+  // Оплата через сервер бота подключается вместе с PAY_API_URL.
+});
+
+amountInput.value = String(amount);
+renderTabs();
 renderList();
-renderOrder();
+render();
+requestAnimationFrame(() => requestAnimationFrame(() => segmented.classList.add("is-ready")));

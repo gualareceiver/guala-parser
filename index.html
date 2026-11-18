@@ -8,18 +8,15 @@
   <meta name="color-scheme" content="dark light">
   <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
   <header class="topbar">
     <a class="brand" href="./" aria-label="Guala Parser">
-      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-        <rect width="32" height="32" rx="8" class="brand-tile"/>
-        <circle cx="15" cy="15" r="6.5" class="brand-ring"/>
-        <circle cx="23" cy="23" r="2" class="brand-dot"/>
-      </svg>
+      <img class="brand-mark" src="logo.png" alt="" width="28" height="28">
       <span>Guala Parser</span>
     </a>
     <a class="bot-link" href="https://t.me/gualaparser_bot" rel="noopener">Открыть бота</a>
@@ -33,15 +30,31 @@
 
     <div class="layout">
       <section class="catalog" aria-label="Тарифы">
-        <div class="segmented" role="tablist" aria-label="Как платить">
+        <div class="segmented" role="tablist" aria-label="Что купить">
           <span class="segmented-thumb" aria-hidden="true"></span>
-          <button type="button" role="tab" id="tab-access" aria-controls="panel" aria-selected="true" data-kind="access">Доступ на срок</button>
-          <button type="button" role="tab" id="tab-channels" aria-controls="panel" aria-selected="false" data-kind="channels">Пакет каналов</button>
+          <button type="button" role="tab" id="tab-access" aria-controls="panel" aria-selected="true" data-kind="access">Доступ</button>
+          <button type="button" role="tab" id="tab-channels" aria-controls="panel" aria-selected="false" data-kind="channels">Пакет</button>
+          <button type="button" role="tab" id="tab-balance" aria-controls="amount-panel" aria-selected="false" data-kind="balance">Баланс</button>
         </div>
 
         <p class="kind-note" id="kind-note"></p>
 
         <div class="choice-list" id="panel" role="radiogroup" aria-labelledby="tab-access"></div>
+
+        <div class="amount" id="amount-panel" role="tabpanel" aria-labelledby="tab-balance" hidden>
+          <label class="field-label" for="amount-input">Сумма пополнения</label>
+          <div class="field">
+            <input id="amount-input" inputmode="numeric" autocomplete="off" placeholder="1000" maxlength="5">
+            <span class="field-affix">₽</span>
+          </div>
+          <p class="field-hint" id="amount-hint"></p>
+          <div class="chips" id="amount-chips">
+            <button type="button" data-amount="500">500 ₽</button>
+            <button type="button" data-amount="1000">1 000 ₽</button>
+            <button type="button" data-amount="2000">2 000 ₽</button>
+            <button type="button" data-amount="5000">5 000 ₽</button>
+          </div>
+        </div>
 
         <div class="gift" id="gift" hidden>
           <div class="gift-head">
@@ -70,9 +83,17 @@
             <strong id="order-total"></strong>
           </div>
           <p class="order-recipient" id="order-recipient" hidden></p>
+          <div class="recipient" id="recipient-block" hidden>
+            <label class="field-label" for="recipient-input">Кому зачислить</label>
+            <div class="field">
+              <span class="field-affix">@</span>
+              <input id="recipient-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="username" maxlength="64">
+            </div>
+            <p class="field-hint" id="recipient-hint">Ник в Telegram. Этот аккаунт должен уже быть запущен в <a href="https://t.me/gualaparser_bot" rel="noopener">@gualaparser_bot</a>.</p>
+          </div>
           <a class="pay-button" id="pay-button" href="https://t.me/gualaparser_bot" rel="noopener"></a>
           <p class="order-hint" id="order-hint"></p>
-          <p class="order-terms">Оформляя заказ, вы принимаете <a href="terms.html">условия сервиса</a>.</p>
+          <p class="order-terms">Оформляя заказ, вы принимаете <a href="terms.html">пользовательское соглашение</a>.</p>
         </div>
       </aside>
     </div>
@@ -82,8 +103,8 @@
     <span>Guala Parser</span>
     <nav>
       <a href="https://t.me/gualareceiverr" rel="noopener">Поддержка</a>
-      <a href="terms.html">Условия</a>
-      <a href="privacy.html">Конфиденциальность</a>
+      <a href="terms.html">Пользовательское соглашение</a>
+      <a href="privacy.html">Политика конфиденциальности</a>
     </nav>
   </footer>
 
