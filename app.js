@@ -75,13 +75,12 @@ function renderList() {
   kindNote.textContent = KIND_NOTES[kind];
 
   panel.replaceChildren();
-  PRODUCTS.filter((p) => p.kind === kind).forEach((product, index) => {
+  PRODUCTS.filter((p) => p.kind === kind).forEach((product) => {
     const row = document.createElement("button");
     row.type = "button";
     row.className = "choice";
     row.setAttribute("role", "radio");
     row.dataset.id = product.id;
-    row.style.animationDelay = `${index * 35}ms`;
 
     const radio = document.createElement("span");
     radio.className = "radio";
