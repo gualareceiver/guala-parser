@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Guala Parser — купить доступ</title>
+  <meta name="description" content="Доступ к Guala Parser на срок или пакет каналов: бот находит Telegram-каналы и их владельцев.">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0a0a0b" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f3f4f1" media="(prefers-color-scheme: light)">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Guala Parser">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="9" class="brand-tile"/>
+        <circle cx="16" cy="16" r="9.5" class="brand-ring"/>
+        <circle cx="16" cy="16" r="5" class="brand-ring brand-ring-inner"/>
+        <path d="M16 16 L23.5 9.5" class="brand-beam"/>
+        <circle cx="21.2" cy="11.6" r="1.9" class="brand-dot"/>
+      </svg>
+      <span>Guala Parser</span>
+    </a>
+    <a class="bot-link" href="https://t.me/gualaparser_bot" rel="noopener">Открыть бота</a>
+  </header>
+
+  <main class="page">
+    <section class="intro">
+      <h1>Купить доступ</h1>
+      <p class="lead">Бот находит Telegram-каналы и их владельцев: читает комментарии под постами и проверяет профили комментаторов.</p>
+    </section>
+
+    <div class="layout">
+      <section class="catalog" aria-label="Тарифы">
+        <div class="segmented" role="tablist" aria-label="Как платить">
+          <span class="segmented-thumb" aria-hidden="true"></span>
+          <button type="button" role="tab" id="tab-access" aria-controls="panel" aria-selected="true" data-kind="access">Доступ на срок</button>
+          <button type="button" role="tab" id="tab-channels" aria-controls="panel" aria-selected="false" data-kind="channels">Пакет каналов</button>
+        </div>
+
+        <p class="kind-note" id="kind-note"></p>
+
+        <div class="choice-list" id="panel" role="radiogroup" aria-labelledby="tab-access"></div>
+
+        <div class="gift" id="gift" hidden>
+          <div class="gift-head">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-1.5-3-5-3-5-.8C7 7 9 7 12 7zm0 0c1.5-3 5-3 5-.8C17 7 15 7 12 7z"/></svg>
+            <span>В подарок к этой покупке</span>
+          </div>
+          <ul>
+            <li>крео для закупа;</li>
+            <li>скрипты обработки лидов: дебет, тревел, регбиз/РКО;</li>
+            <li>женское голосовое для вашей обработки — с любым вашим текстом.</li>
+          </ul>
+          <p>Чтобы получить подарок, после покупки напишите в поддержку: <a href="https://t.me/gualareceiverr" rel="noopener">@gualareceiverr</a>.</p>
+        </div>
+      </section>
+
+      <aside class="order" aria-label="Ваш заказ">
+        <div class="order-card">
+          <h2>Ваш заказ</h2>
+          <div class="order-row">
+            <span id="order-title"></span>
+            <span id="order-price"></span>
+          </div>
+          <div class="order-divider"></div>
+          <div class="order-total">
+            <span>Итого</span>
+            <strong id="order-total"></strong>
+          </div>
+          <p class="order-recipient" id="order-recipient" hidden></p>
+          <a class="pay-button" id="pay-button" href="https://t.me/gualaparser_bot" rel="noopener"></a>
+          <p class="order-hint" id="order-hint"></p>
+          <p class="order-terms">Оформляя заказ, вы принимаете <a href="terms.html">условия сервиса</a>.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span>Guala Parser</span>
+    <nav>
+      <a href="https://t.me/gualareceiverr" rel="noopener">Поддержка</a>
+      <a href="terms.html">Условия</a>
+      <a href="privacy.html">Конфиденциальность</a>
+    </nav>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
