@@ -91,6 +91,13 @@
             </div>
             <p class="field-hint" id="recipient-hint">Ник в Telegram. Этот аккаунт должен уже быть запущен в <a href="https://t.me/gualaparser_bot" rel="noopener">@gualaparser_bot</a>.</p>
           </div>
+          <div class="method">
+            <span class="field-label" id="method-label">Способ оплаты</span>
+            <div class="chips" id="method-chips" role="radiogroup" aria-labelledby="method-label">
+              <button type="button" role="radio" data-method="sbp" aria-checked="true">СБП</button>
+              <button type="button" role="radio" data-method="crypto" aria-checked="false">Криптовалюта</button>
+            </div>
+          </div>
           <a class="pay-button" id="pay-button" href="https://t.me/gualaparser_bot" rel="noopener"></a>
           <p class="order-hint" id="order-hint"></p>
           <p class="order-terms">Оформляя заказ, вы принимаете <a href="terms.html">пользовательское соглашение</a>.</p>

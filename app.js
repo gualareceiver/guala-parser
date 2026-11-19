@@ -23,7 +23,7 @@ const TOPUP_MIN = 100;
 const TOPUP_MAX = 9216;
 const TOPUP_DEFAULT = 1000;
 
-// Адрес оплаты на сервере бота. Пока его нет, кнопка ведёт в бота.
+// Адрес оплаты на сервере бота. Пока его нет, кнопка «Оплатить» — заглушка.
 const PAY_API_URL = "";
 const BOT_URL = "https://t.me/gualaparser_bot";
 
@@ -87,7 +87,11 @@ const gift = $("gift");
 const payButton = $("pay-button");
 const orderHint = $("order-hint");
 
+const methodChips = $("method-chips").querySelectorAll("button");
+
 let recipientTouched = false;
+let method = "sbp";
+let stubShown = false;
 
 function amountError() {
   if (!Number.isInteger(amount) || amount < TOPUP_MIN || amount > TOPUP_MAX) {
@@ -206,20 +210,13 @@ function renderOrder() {
     recipientHint.innerHTML = recipientHintDefault;
   }
 
-  if (PAY_API_URL) {
-    payButton.textContent = "Оплатить";
-    payButton.removeAttribute("href");
-    payButton.setAttribute("role", "button");
-    payButton.setAttribute("aria-disabled", String(Boolean(error) || !isUsername(name)));
-    orderHint.textContent = "Способ оплаты — СБП или криптовалюту — выберете на следующем шаге.";
-  } else {
-    payButton.textContent = "Оплатить в боте";
-    payButton.href = BOT_URL;
-    payButton.removeAttribute("aria-disabled");
-    orderHint.textContent = isBalance
-      ? "Откройте в боте «Профиль» → «Пополнить баланс»."
-      : "Откройте в боте «Купить доступ» и выберите этот вариант.";
-  }
+  payButton.textContent = "Оплатить";
+  payButton.removeAttribute("href");
+  payButton.setAttribute("role", "button");
+  payButton.tabIndex = 0;
+  payButton.setAttribute("aria-disabled", String(Boolean(error)));
+  methodChips.forEach((chip) => chip.setAttribute("aria-checked", String(chip.dataset.method === method)));
+  if (!stubShown) orderHint.textContent = "";
 
   const url = new URL(window.location.href);
   if (isBalance) {
@@ -293,12 +290,34 @@ recipientInput.addEventListener("blur", () => {
   render();
 });
 
-payButton.addEventListener("click", (event) => {
-  if (!PAY_API_URL) return;
+methodChips.forEach((chip) => {
+  chip.addEventListener("click", () => {
+    method = chip.dataset.method;
+    render();
+  });
+});
+
+function pay(event) {
   event.preventDefault();
   recipientTouched = true;
+  stubShown = false;
   render();
+  if (payButton.getAttribute("aria-disabled") === "true" || !isUsername(recipient())) {
+    if (!recipientFromBot && !isUsername(recipient())) recipientInput.focus();
+    return;
+  }
   // Оплата через сервер бота подключается вместе с PAY_API_URL.
+  stubShown = true;
+  orderHint.replaceChildren(
+    "Оплата на сайте скоро заработает. Пока оплатить можно ",
+    Object.assign(document.createElement("a"), { href: BOT_URL, rel: "noopener", textContent: "в боте" }),
+    ".",
+  );
+}
+
+payButton.addEventListener("click", pay);
+payButton.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") pay(event);
 });
 
 amountInput.value = String(amount);

@@ -263,7 +263,11 @@ h1 {
 .chips button:hover { border-color: var(--edge-strong); }
 .chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
+.chips button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
 .recipient { margin-top: 18px; }
+.method { margin-top: 18px; }
+.method .chips { margin-top: 0; }
 .order-card .field { background: var(--bg); }
 
 /* --- Подарок --- */
